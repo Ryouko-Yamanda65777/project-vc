@@ -32,7 +32,7 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                         with gr.TabItem("Upload"):
                             dropbox = gr.File(label="Drop your audio here & hit the Reload button.")
                         with gr.TabItem("Record"):
-                            record_button=gr.Audio(source="microphone", label="OR Record audio.", type="filepath")
+                            record_button=gr.Microphone(label="OR Record audio.", type="filepath")
                         with gr.TabItem("TTS (experimental)", visible=False if whisperspeak_on is None else True):
                             with gr.Row():
                                 tts_text = gr.Textbox(label="Text to Speech", placeholder="Enter text to convert to speech")
@@ -446,9 +446,9 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                         )
 
     if config.iscolab:
-        app.queue(concurrency_count=511, max_size=1022).launch(share=True)
+        app.queue(max_size=20).launch(share=True,allowed_paths=["a.png"],show_error=True)
     else:
-        app.queue(concurrency_count=511, max_size=1022).launch(
+        app.queue(max_size=1022).launch(
             server_name="0.0.0.0",
             inbrowser=not config.noautoopen,
             server_port=config.listen_port,
