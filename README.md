@@ -27,7 +27,7 @@ Also, do not forget to download the necessary models. EasyGUI uses RVC 2 40k mod
 ```bash
 python download_files.py
 ```
-Finally, run the GUI.py
+Finally, run the demo.py
 ```bash
 python GUI.py
 ```
