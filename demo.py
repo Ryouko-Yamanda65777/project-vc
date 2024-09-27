@@ -1,6 +1,6 @@
 from original import *
 import shutil, glob
-from easyfuncs import download_from_url, CachedModels, whisperspeak, whisperspeak_on, process
+from easyfuncs import download_from_url, CachedModels, whisperspeak, whisperspeak_on, stereo_process, sr_process
 os.makedirs("dataset",exist_ok=True)
 model_library = CachedModels()
 
@@ -49,10 +49,10 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             allow_custom_value=True
                         )
                     with gr.Row():
-                        audio_player = gr.Audio(label="Input")
+                        input_player = gr.Audio(label="Input",type="numpy")
                         input_audio0.change(
                             inputs=[input_audio0],
-                            outputs=[audio_player],
+                            outputs=[input_player],
                             fn=lambda path: {"value":path,"__type__":"update"} if os.path.exists(path) else None
                         )
                         record_button.stop_recording(
@@ -87,9 +87,7 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             value=0.5,
                             interactive=True,
                         )
-                    with gr.Accordion("Processing", open=True):
-                            processing_options = gr.Radio(choices=["mono","stereo"],value="mono",label="Channels",visible=True)
-                    vc_output2 = gr.Audio(label="Output")
+                    output_player = gr.Audio(label="Output")
                     with gr.Accordion("General Settings", open=False):
                         f0method0 = gr.Radio(
                             label="Method",
@@ -131,7 +129,27 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             step=0.01,
                             interactive=True,
                         )
-                        if voice_model != None: vc.get_vc(voice_model.value,protect0,protect0)
+                        if voice_model != None: 
+                            try: vc.get_vc(voice_model.value,protect0,protect0)
+                            except: pass
+                    with gr.Accordion("Processing Tools (Experimental)", open=True):
+                        audio_choice = gr.Radio(choices=["Input", "Output"], value="Output", label="Source",interactive=True)
+                        with gr.Column():
+                            stereo_button = gr.Button(value="Stereo", variant="primary")
+                            stereo_button.click(
+                                fn=stereo_process,
+                                inputs=[input_player,output_player,audio_choice],
+                                outputs=[output_player],
+                                preprocess=True,
+                            )
+                        with gr.Column():
+                            sr_button = gr.Button(value="SuperResolution", variant="primary")
+                            sr_button.click(
+                                fn=sr_process,
+                                inputs=[input_player,output_player,audio_choice],
+                                outputs=[output_player],
+                                preprocess=True,
+                            )
                     file_index1 = gr.Textbox(
                         label="Index Path",
                         interactive=True,
@@ -157,12 +175,6 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                 f0_file = gr.File(label="F0 Path", visible=False)
             with gr.Row():
                 vc_output1 = gr.Textbox(label="Information", placeholder="Welcome!",visible=False)
-                pre_process = gr.Audio(visible=False)
-                pre_process.change(
-                    fn=process,
-                    inputs=[pre_process,processing_options],
-                    outputs=[vc_output2]
-                )
                 but0.click(
                     vc.vc_single,  
                     [
@@ -179,7 +191,7 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                         rms_mix_rate0,
                         protect0,
                     ],
-                    [vc_output1, pre_process],
+                    [vc_output1, output_player],
                     api_name="infer_convert",
                 )  
                 voice_model.change(
