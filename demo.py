@@ -1,6 +1,6 @@
 from original import *
 import shutil, glob
-from easyfuncs import download_from_url, CachedModels, whisperspeak, whisperspeak_on
+from easyfuncs import download_from_url, CachedModels, whisperspeak, whisperspeak_on, process
 os.makedirs("dataset",exist_ok=True)
 model_library = CachedModels()
 
@@ -87,6 +87,8 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             value=0.5,
                             interactive=True,
                         )
+                    with gr.Accordion("Processing", open=True):
+                            processing_options = gr.Radio(choices=["mono","stereo"],value="mono",label="Channels",visible=True)
                     vc_output2 = gr.Audio(label="Output")
                     with gr.Accordion("General Settings", open=False):
                         f0method0 = gr.Radio(
@@ -155,6 +157,12 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                 f0_file = gr.File(label="F0 Path", visible=False)
             with gr.Row():
                 vc_output1 = gr.Textbox(label="Information", placeholder="Welcome!",visible=False)
+                pre_process = gr.Audio(visible=False)
+                pre_process.change(
+                    fn=process,
+                    inputs=[pre_process,processing_options],
+                    outputs=[vc_output2]
+                )
                 but0.click(
                     vc.vc_single,  
                     [
@@ -171,7 +179,7 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                         rms_mix_rate0,
                         protect0,
                     ],
-                    [vc_output1, vc_output2],
+                    [vc_output1, pre_process],
                     api_name="infer_convert",
                 )  
                 voice_model.change(
