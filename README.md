@@ -29,5 +29,5 @@ python download_files.py
 ```
 Finally, run the demo.py
 ```bash
-python GUI.py
+python demo.py
 ```
