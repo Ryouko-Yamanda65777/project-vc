@@ -49,7 +49,7 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             allow_custom_value=True
                         )
                     with gr.Row():
-                        input_player = gr.Audio(label="Input",type="numpy")
+                        input_player = gr.Audio(label="Input",type="numpy",interactive=False)
                         input_audio0.change(
                             inputs=[input_audio0],
                             outputs=[input_player],
@@ -87,7 +87,7 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             value=0.5,
                             interactive=True,
                         )
-                    output_player = gr.Audio(label="Output")
+                    output_player = gr.Audio(label="Output",interactive=False)
                     with gr.Accordion("General Settings", open=False):
                         f0method0 = gr.Radio(
                             label="Method",
