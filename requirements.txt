@@ -6,7 +6,7 @@ librosa==0.9.1
 llvmlite==0.39.0
 fairseq==0.12.2
 faiss-cpu==1.7.3
-gradio==3.43.0
+gradio==3.48.0
 Cython
 pydub>=0.25.1
 soundfile>=0.12.1
@@ -48,3 +48,9 @@ gdown==4.6.0
 mega.py
 webdataset
 av==11.0.0
+yt_dlp
+audio-separator[gpu]
+
+
+
+
