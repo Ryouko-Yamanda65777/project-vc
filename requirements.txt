@@ -11,7 +11,7 @@ librosa==0.9.1
 llvmlite==0.39.0
 fairseq==0.12.2
 faiss-cpu==1.7.3
-gradio==3.43.2
+gradio==3.48.0
 Cython
 pydub>=0.25.1
 soundfile>=0.12.1
@@ -51,3 +51,5 @@ ffmpy==0.3.1
 python-dotenv>=1.0.0
 av
 pydantic==1.10.12
+yt_dlp
+audio-separator[gpu]==0.17.5
