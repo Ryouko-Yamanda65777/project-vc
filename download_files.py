@@ -10,7 +10,7 @@ files = {
     "pretrained_v2/D40k.pth": "https://huggingface.co/Rejekts/project/resolve/main/D40k.pth",
     "pretrained_v2/G40k.pth": "https://huggingface.co/Rejekts/project/resolve/main/G40k.pth",
     "pretrained_v2/f0D40k.pth": "https://huggingface.co/Rejekts/project/resolve/main/f0D40k.pth",
-    "pretrained_v2/f0G40k.pth": "https://huggingface.co/Rejekts/project/resolve/main/f0G40k.pth"
+    "pretrained_v2/f0G40k.pth": "https://huggingface.co/Rejekts/project/resolve/main/f0G40k.pth",
 }
 
 for file, link in files.items():
@@ -18,9 +18,14 @@ for file, link in files.items():
     if not os.path.exists(file_path):
         try:
             print(f"Downloading {file} from {link}...")
-            process = subprocess.Popen(['wget', link, '-O', file_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            process = subprocess.Popen(
+                ["wget", link, "-O", file_path],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
             for line in process.stdout:
-                print(line, end='')  # Print each line as it's received
+                print(line, end="")  # Print each line as it's received
             process.wait()  # Wait for the process to finish
             if process.returncode != 0:
                 print(f"Error downloading {file}")

@@ -21,6 +21,7 @@ from infer.lib.infer_pack.models import (
 from infer.modules.vc.pipeline import Pipeline
 from infer.modules.vc.utils import *
 
+
 class VC:
     def __init__(self, config):
         self.n_spk = None
@@ -62,12 +63,10 @@ class VC:
         format1,
     ):
         try:
-            dir_path = (
-                dir_path.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
-            )  
+            dir_path = dir_path.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
             opt_root = opt_root.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
             os.makedirs(opt_root, exist_ok=True)
-            
+
             try:
                 if dir_path != "":
                     paths = [
@@ -81,7 +80,9 @@ class VC:
 
             infos = []
             for path in paths:
-                logger.info(f"Processing {path}...", flush=True)  # Log each file processed
+                logger.info(
+                    f"Processing {path}...", flush=True
+                )  # Log each file processed
                 info, opt = self.vc_single(
                     sid,
                     path,
@@ -101,19 +102,19 @@ class VC:
                         tgt_sr, audio_opt = opt
                         if format1 in ["wav", "flac"]:
                             sf.write(
-                                "%s/%s.%s" % (opt_root, os.path.basename(path), format1),
+                                "%s/%s.%s"
+                                % (opt_root, os.path.basename(path), format1),
                                 audio_opt,
                                 tgt_sr,
                             )
                         else:
-                            path = "%s/%s.%s" % (opt_root, os.path.basename(path), format1)
+                            path = "%s/%s.%s" % (
+                                opt_root,
+                                os.path.basename(path),
+                                format1,
+                            )
                             with BytesIO() as wavf:
-                                sf.write(
-                                    wavf,
-                                    audio_opt,
-                                    tgt_sr,
-                                    format="wav"
-                                )
+                                sf.write(wavf, audio_opt, tgt_sr, format="wav")
                                 wavf.seek(0, 0)
                                 with open(path, "wb") as outf:
                                     wav2(wavf, outf, format1)
@@ -121,7 +122,9 @@ class VC:
                         info += traceback.format_exc()
                 infos.append("%s->%s" % (os.path.basename(path), info))
                 yield "\n".join(infos)
-                logger.info(f"Completed {path}: {info}", flush=True)  # Log completion of each file
+                logger.info(
+                    f"Completed {path}: {info}", flush=True
+                )  # Log completion of each file
             yield "\n".join(infos)
         except:
             yield traceback.format_exc()

@@ -1,6 +1,7 @@
 import os, sys
 import datetime, subprocess
 from mega import Mega
+
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 import logging
@@ -32,6 +33,7 @@ from infer.lib.train.process_ckpt import (
 )
 from infer.modules.uvr5.modules import uvr
 from infer.modules.vc.modules import VC
+
 logging.getLogger("numba").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
@@ -154,14 +156,19 @@ def change_choices():
         for name in files:
             if name.endswith(".index") and "trained" not in name:
                 index_paths.append("%s/%s" % (root, name))
-    audio_files=[]
+    audio_files = []
     for filename in os.listdir("./audios"):
-        if filename.endswith(('.wav','.mp3','.ogg')):
-            audio_files.append('./audios/'+filename)
-    return {"choices": sorted(names), "__type__": "update"}, {
-        "choices": sorted(index_paths),
-        "__type__": "update",
-    }, {"choices": sorted(audio_files), "__type__": "update"}
+        if filename.endswith((".wav", ".mp3", ".ogg")):
+            audio_files.append("./audios/" + filename)
+    return (
+        {"choices": sorted(names), "__type__": "update"},
+        {
+            "choices": sorted(index_paths),
+            "__type__": "update",
+        },
+        {"choices": sorted(audio_files), "__type__": "update"},
+    )
+
 
 def clean():
     return {"value": "", "__type__": "update"}
@@ -405,12 +412,16 @@ def get_pretrained_models(path_str, f0_str, sr2):
             sr2,
         )
     return (
-        "assets/pretrained%s/%sG%s.pth" % (path_str, f0_str, sr2)
-        if if_pretrained_generator_exist
-        else "",
-        "assets/pretrained%s/%sD%s.pth" % (path_str, f0_str, sr2)
-        if if_pretrained_discriminator_exist
-        else "",
+        (
+            "assets/pretrained%s/%sG%s.pth" % (path_str, f0_str, sr2)
+            if if_pretrained_generator_exist
+            else ""
+        ),
+        (
+            "assets/pretrained%s/%sD%s.pth" % (path_str, f0_str, sr2)
+            if if_pretrained_discriminator_exist
+            else ""
+        ),
     )
 
 
@@ -734,7 +745,9 @@ def train1key(
         if_save_every_weights18,
         version19,
     )
-    yield get_info_str(i18n("训练结束, 您可查看控制台训练日志或实验文件夹下的train.log"))
+    yield get_info_str(
+        i18n("训练结束, 您可查看控制台训练日志或实验文件夹下的train.log")
+    )
 
     ####### step3b:训练索引
     [get_info_str(_) for _ in train_index(exp_dir1, version19)]
@@ -768,70 +781,81 @@ def change_f0_method(f0method8):
         visible = False
     return {"visible": visible, "__type__": "update"}
 
+
 def find_model():
     if len(names) > 0:
-        vc.get_vc(sorted(names)[0],None,None)
+        vc.get_vc(sorted(names)[0], None, None)
         return sorted(names)[0]
     else:
         try:
             gr.Info("Do not forget to choose a model.")
         except:
             pass
-        return ''
-    
-def find_audios(index=False):     
-    audio_files=[]
-    if not os.path.exists('./audios'): os.mkdir("./audios")
+        return ""
+
+
+def find_audios(index=False):
+    audio_files = []
+    if not os.path.exists("./audios"):
+        os.mkdir("./audios")
     for filename in os.listdir("./audios"):
-        if filename.endswith(('.wav','.mp3','.ogg')):
-            audio_files.append("./audios/"+filename)
+        if filename.endswith((".wav", ".mp3", ".ogg")):
+            audio_files.append("./audios/" + filename)
     if index:
-        if len(audio_files) > 0: return sorted(audio_files)[0]
-        else: return ""
-    elif len(audio_files) > 0: return sorted(audio_files)
-    else: return []
+        if len(audio_files) > 0:
+            return sorted(audio_files)[0]
+        else:
+            return ""
+    elif len(audio_files) > 0:
+        return sorted(audio_files)
+    else:
+        return []
+
 
 def get_index():
-    if find_model() != '':
-        chosen_model=sorted(names)[0].split(".")[0]
-        logs_path="./logs/"+chosen_model
+    if find_model() != "":
+        chosen_model = sorted(names)[0].split(".")[0]
+        logs_path = "./logs/" + chosen_model
         if os.path.exists(logs_path):
             for file in os.listdir(logs_path):
                 if file.endswith(".index"):
                     return os.path.join(logs_path, file)
-            return ''
+            return ""
         else:
-            return ''
-        
+            return ""
+
+
 def get_indexes():
-    indexes_list=[]
+    indexes_list = []
     for dirpath, dirnames, filenames in os.walk("./logs/"):
         for filename in filenames:
             if filename.endswith(".index"):
-                indexes_list.append(os.path.join(dirpath,filename))
+                indexes_list.append(os.path.join(dirpath, filename))
     if len(indexes_list) > 0:
         return indexes_list
     else:
-        return ''
-    
+        return ""
+
+
 def save_wav(file):
     try:
-        file_path=file.name
-        shutil.move(file_path,'./audios')
-        return './audios/'+os.path.basename(file_path)
+        file_path = file.name
+        shutil.move(file_path, "./audios")
+        return "./audios/" + os.path.basename(file_path)
     except AttributeError:
         try:
-            new_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")+'.wav'
-            new_path='./audios/'+new_name
-            shutil.move(file,new_path)
+            new_name = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + ".wav"
+            new_path = "./audios/" + new_name
+            shutil.move(file, new_path)
             return new_path
         except TypeError:
             return None
 
+
 def download_from_url(url, model):
-    if url == '':
+    if url == "":
         return "URL cannot be left empty."
-    if model =='':
+    if model == "":
         return "You need to name your model. For example: My-Model"
     url = url.strip()
     zip_dirs = ["zips", "unzips"]
@@ -840,77 +864,90 @@ def download_from_url(url, model):
             shutil.rmtree(directory)
     os.makedirs("zips", exist_ok=True)
     os.makedirs("unzips", exist_ok=True)
-    zipfile = model + '.zip'
-    zipfile_path = './zips/' + zipfile
+    zipfile = model + ".zip"
+    zipfile_path = "./zips/" + zipfile
     try:
         if "drive.google.com" in url:
             subprocess.run(["gdown", url, "--fuzzy", "-O", zipfile_path])
         elif "mega.nz" in url:
             m = Mega()
-            m.download_url(url, './zips')
+            m.download_url(url, "./zips")
         else:
             subprocess.run(["wget", url, "-O", zipfile_path])
         for filename in os.listdir("./zips"):
             if filename.endswith(".zip"):
-                zipfile_path = os.path.join("./zips/",filename)
-                shutil.unpack_archive(zipfile_path, "./unzips", 'zip')
+                zipfile_path = os.path.join("./zips/", filename)
+                shutil.unpack_archive(zipfile_path, "./unzips", "zip")
             else:
                 return "No zipfile found."
-        for root, dirs, files in os.walk('./unzips'):
+        for root, dirs, files in os.walk("./unzips"):
             for file in files:
                 file_path = os.path.join(root, file)
                 if file.endswith(".index"):
-                    os.mkdir(f'./logs/{model}')
-                    shutil.copy2(file_path,f'./logs/{model}')
+                    os.mkdir(f"./logs/{model}")
+                    shutil.copy2(file_path, f"./logs/{model}")
                 elif "G_" not in file and "D_" not in file and file.endswith(".pth"):
-                    shutil.copy(file_path,f'./assets/weights/{model}.pth')
+                    shutil.copy(file_path, f"./assets/weights/{model}.pth")
         shutil.rmtree("zips")
         shutil.rmtree("unzips")
         return "Success."
     except:
         return "There's been an error."
 
+
 def upload_to_dataset(files, dir):
-    if dir == '':
-        dir = './dataset/'+datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    if dir == "":
+        dir = "./dataset/" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     if not os.path.exists(dir):
         os.makedirs(dir)
     for file in files:
-        path=file.name
-        shutil.copy2(path,dir)
+        path = file.name
+        shutil.copy2(path, dir)
     try:
         gr.Info(i18n("处理数据"))
     except:
         pass
-    return i18n("处理数据"), {"value":dir,"__type__":"update"}
+    return i18n("处理数据"), {"value": dir, "__type__": "update"}
+
 
 def download_model_files(model):
     model_found = False
     index_found = False
-    if os.path.exists(f'./assets/weights/{model}.pth'): model_found = True
-    if os.path.exists(f'./logs/{model}'):
-        for file in os.listdir(f'./logs/{model}'):
-            if file.endswith('.index') and 'added' in file:
+    if os.path.exists(f"./assets/weights/{model}.pth"):
+        model_found = True
+    if os.path.exists(f"./logs/{model}"):
+        for file in os.listdir(f"./logs/{model}"):
+            if file.endswith(".index") and "added" in file:
                 log_file = file
                 index_found = True
     if model_found and index_found:
-        return [f'./assets/weights/{model}.pth', f'./logs/{model}/{log_file}'], "Done"
+        return [f"./assets/weights/{model}.pth", f"./logs/{model}/{log_file}"], "Done"
     elif model_found and not index_found:
-        return f'./assets/weights/{model}.pth', "Could not find Index file."
+        return f"./assets/weights/{model}.pth", "Could not find Index file."
     elif index_found and not model_found:
-        return f'./logs/{model}/{log_file}', f'Make sure the Voice Name is correct. I could not find {model}.pth'
+        return (
+            f"./logs/{model}/{log_file}",
+            f"Make sure the Voice Name is correct. I could not find {model}.pth",
+        )
     else:
-        return None, f'Could not find {model}.pth or corresponding Index file.'
+        return None, f"Could not find {model}.pth or corresponding Index file."
 
-with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue="zinc")) as app:
+
+with gr.Blocks(
+    title="🔊", theme=gr.themes.Base(primary_hue="rose", neutral_hue="zinc")
+) as app:
     with gr.Row():
         gr.HTML("<img  src='file/a.png' alt='image'>")
     with gr.Tabs():
         with gr.TabItem(i18n("模型推理")):
             with gr.Row():
-                sid0 = gr.Dropdown(label=i18n("推理音色"), choices=sorted(names), value=find_model())
-                refresh_button = gr.Button(i18n("刷新音色列表和索引路径"), variant="primary")
-                #clean_button = gr.Button(i18n("卸载音色省显存"), variant="primary")
+                sid0 = gr.Dropdown(
+                    label=i18n("推理音色"), choices=sorted(names), value=find_model()
+                )
+                refresh_button = gr.Button(
+                    i18n("刷新音色列表和索引路径"), variant="primary"
+                )
+                # clean_button = gr.Button(i18n("卸载音色省显存"), variant="primary")
                 spk_item = gr.Slider(
                     minimum=0,
                     maximum=2333,
@@ -920,9 +957,9 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                     visible=False,
                     interactive=True,
                 )
-                #clean_button.click(
+                # clean_button.click(
                 #    fn=clean, inputs=[], outputs=[sid0], api_name="infer_clean"
-                #)
+                # )
                 vc_transform0 = gr.Number(
                     label=i18n("变调(整数, 半音数量, 升八度12降八度-12)"), value=0
                 )
@@ -930,24 +967,36 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
-                        dropbox = gr.File(label="Drop your audio here & hit the Reload button.")
+                        dropbox = gr.File(
+                            label="Drop your audio here & hit the Reload button."
+                        )
                     with gr.Row():
-                        record_button=gr.Audio(source="microphone", label="OR Record audio.", type="filepath")
+                        record_button = gr.Audio(
+                            source="microphone",
+                            label="OR Record audio.",
+                            type="filepath",
+                        )
                     with gr.Row():
                         input_audio0 = gr.Dropdown(
                             label=i18n("输入待处理音频文件路径(默认是正确格式示例)"),
                             value=find_audios(True),
-                            choices=find_audios()
+                            choices=find_audios(),
                         )
-                        record_button.change(fn=save_wav, inputs=[record_button], outputs=[input_audio0])
-                        dropbox.upload(fn=save_wav, inputs=[dropbox], outputs=[input_audio0])
+                        record_button.change(
+                            fn=save_wav, inputs=[record_button], outputs=[input_audio0]
+                        )
+                        dropbox.upload(
+                            fn=save_wav, inputs=[dropbox], outputs=[input_audio0]
+                        )
                 with gr.Column():
-                    with gr.Accordion(label=i18n("自动检测index路径,下拉式选择(dropdown)"), open=False):
+                    with gr.Accordion(
+                        label=i18n("自动检测index路径,下拉式选择(dropdown)"), open=False
+                    ):
                         file_index2 = gr.Dropdown(
                             label=i18n("自动检测index路径,下拉式选择(dropdown)"),
                             choices=get_indexes(),
                             interactive=True,
-                            value=get_index()
+                            value=get_index(),
                         )
                         index_rate1 = gr.Slider(
                             minimum=0,
@@ -956,22 +1005,28 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             value=0.66,
                             interactive=True,
                         )
-                    vc_output2 = gr.Audio(label=i18n("输出音频(右下角三个点,点了可以下载)"))
+                    vc_output2 = gr.Audio(
+                        label=i18n("输出音频(右下角三个点,点了可以下载)")
+                    )
                     with gr.Accordion(label=i18n("常规设置"), open=False):
                         f0method0 = gr.Radio(
                             label=i18n(
                                 "选择音高提取算法,输入歌声可用pm提速,harvest低音好但巨慢无比,crepe效果好但吃GPU,rmvpe效果最好且微吃GPU"
                             ),
-                            choices=["pm", "harvest", "crepe", "rmvpe"]
-                            if config.dml == False
-                            else ["pm", "harvest", "rmvpe"],
+                            choices=(
+                                ["pm", "harvest", "crepe", "rmvpe"]
+                                if config.dml == False
+                                else ["pm", "harvest", "rmvpe"]
+                            ),
                             value="rmvpe",
                             interactive=True,
                         )
                         filter_radius0 = gr.Slider(
                             minimum=0,
                             maximum=7,
-                            label=i18n(">=3则使用对harvest音高识别的结果使用中值滤波，数值为滤波半径，使用可以削弱哑音"),
+                            label=i18n(
+                                ">=3则使用对harvest音高识别的结果使用中值滤波，数值为滤波半径，使用可以削弱哑音"
+                            ),
                             value=3,
                             step=1,
                             interactive=True,
@@ -983,12 +1038,14 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             value=0,
                             step=1,
                             interactive=True,
-                            visible=False
+                            visible=False,
                         )
                         rms_mix_rate0 = gr.Slider(
                             minimum=0,
                             maximum=1,
-                            label=i18n("输入源音量包络替换输出音量包络融合比例，越靠近1越使用输出包络"),
+                            label=i18n(
+                                "输入源音量包络替换输出音量包络融合比例，越靠近1越使用输出包络"
+                            ),
                             value=0.21,
                             interactive=True,
                         )
@@ -1006,7 +1063,7 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                         label=i18n("特征检索库文件路径,为空则使用下拉的选择结果"),
                         value="",
                         interactive=True,
-                        visible=False
+                        visible=False,
                     )
                     refresh_button.click(
                         fn=change_choices,
@@ -1020,11 +1077,14 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                     #     interactive=True,
                     # )
             with gr.Row():
-                f0_file = gr.File(label=i18n("F0曲线文件, 可选, 一行一个音高, 代替默认F0及升降调"), visible=False)
+                f0_file = gr.File(
+                    label=i18n("F0曲线文件, 可选, 一行一个音高, 代替默认F0及升降调"),
+                    visible=False,
+                )
             with gr.Row():
                 vc_output1 = gr.Textbox(label=i18n("输出信息"))
                 but0.click(
-                    vc.vc_single,  
+                    vc.vc_single,
                     [
                         spk_item,
                         input_audio0,
@@ -1044,19 +1104,29 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                     api_name="infer_convert",
                 )
             with gr.Row():
-                with gr.Accordion(open=False, label=i18n("批量转换, 输入待转换音频文件夹, 或上传多个音频文件, 在指定文件夹(默认opt)下输出转换的音频. ")):                
+                with gr.Accordion(
+                    open=False,
+                    label=i18n(
+                        "批量转换, 输入待转换音频文件夹, 或上传多个音频文件, 在指定文件夹(默认opt)下输出转换的音频. "
+                    ),
+                ):
                     with gr.Row():
-                        opt_input = gr.Textbox(label=i18n("指定输出文件夹"), value="opt")
+                        opt_input = gr.Textbox(
+                            label=i18n("指定输出文件夹"), value="opt"
+                        )
                         vc_transform1 = gr.Number(
-                            label=i18n("变调(整数, 半音数量, 升八度12降八度-12)"), value=0
+                            label=i18n("变调(整数, 半音数量, 升八度12降八度-12)"),
+                            value=0,
                         )
                         f0method1 = gr.Radio(
                             label=i18n(
                                 "选择音高提取算法,输入歌声可用pm提速,harvest低音好但巨慢无比,crepe效果好但吃GPU,rmvpe效果最好且微吃GPU"
                             ),
-                            choices=["pm", "harvest", "crepe", "rmvpe"]
-                            if config.dml == False
-                            else ["pm", "harvest", "rmvpe"],
+                            choices=(
+                                ["pm", "harvest", "crepe", "rmvpe"]
+                                if config.dml == False
+                                else ["pm", "harvest", "rmvpe"]
+                            ),
                             value="pm",
                             interactive=True,
                         )
@@ -1064,24 +1134,26 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                         filter_radius1 = gr.Slider(
                             minimum=0,
                             maximum=7,
-                            label=i18n(">=3则使用对harvest音高识别的结果使用中值滤波，数值为滤波半径，使用可以削弱哑音"),
+                            label=i18n(
+                                ">=3则使用对harvest音高识别的结果使用中值滤波，数值为滤波半径，使用可以削弱哑音"
+                            ),
                             value=3,
                             step=1,
                             interactive=True,
-                            visible=False
+                            visible=False,
                         )
                     with gr.Row():
                         file_index3 = gr.Textbox(
                             label=i18n("特征检索库文件路径,为空则使用下拉的选择结果"),
                             value="",
                             interactive=True,
-                            visible=False
+                            visible=False,
                         )
                         file_index4 = gr.Dropdown(
                             label=i18n("自动检测index路径,下拉式选择(dropdown)"),
                             choices=sorted(index_paths),
                             interactive=True,
-                            visible=False
+                            visible=False,
                         )
                         refresh_button.click(
                             fn=lambda: change_choices()[1],
@@ -1100,7 +1172,7 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             label=i18n("检索特征占比"),
                             value=1,
                             interactive=True,
-                            visible=False
+                            visible=False,
                         )
                     with gr.Row():
                         resample_sr1 = gr.Slider(
@@ -1110,12 +1182,14 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             value=0,
                             step=1,
                             interactive=True,
-                            visible=False
+                            visible=False,
                         )
                         rms_mix_rate1 = gr.Slider(
                             minimum=0,
                             maximum=1,
-                            label=i18n("输入源音量包络替换输出音量包络融合比例，越靠近1越使用输出包络"),
+                            label=i18n(
+                                "输入源音量包络替换输出音量包络融合比例，越靠近1越使用输出包络"
+                            ),
                             value=0.21,
                             interactive=True,
                         )
@@ -1131,11 +1205,14 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                         )
                     with gr.Row():
                         dir_input = gr.Textbox(
-                            label=i18n("输入待处理音频文件夹路径(去文件管理器地址栏拷就行了)"),
+                            label=i18n(
+                                "输入待处理音频文件夹路径(去文件管理器地址栏拷就行了)"
+                            ),
                             value="./audios",
                         )
                         inputs = gr.File(
-                            file_count="multiple", label=i18n("也可批量输入音频文件, 二选一, 优先读文件夹")
+                            file_count="multiple",
+                            label=i18n("也可批量输入音频文件, 二选一, 优先读文件夹"),
                         )
                     with gr.Row():
                         format1 = gr.Radio(
@@ -1175,16 +1252,18 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
             )
         with gr.TabItem("Download Model"):
             with gr.Row():
-                url=gr.Textbox(label="Enter the URL to the Model:")
+                url = gr.Textbox(label="Enter the URL to the Model:")
             with gr.Row():
                 model = gr.Textbox(label="Name your model:")
-                download_button=gr.Button("Download")
+                download_button = gr.Button("Download")
             with gr.Row():
-                status_bar=gr.Textbox(label="")
-                download_button.click(fn=download_from_url, inputs=[url, model], outputs=[status_bar])
+                status_bar = gr.Textbox(label="")
+                download_button.click(
+                    fn=download_from_url, inputs=[url, model], outputs=[status_bar]
+                )
             with gr.Row():
                 gr.Markdown(
-                """
+                    """
                 ❤️ If you use this and like it, help me keep it.❤️ 
                 https://paypal.me/lesantillan
                 """
@@ -1206,14 +1285,14 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                         choices=["40k", "48k"],
                         value="40k",
                         interactive=True,
-                        visible=False
+                        visible=False,
                     )
                     if_f0_3 = gr.Radio(
                         label=i18n("模型是否带音高指导(唱歌一定要, 语音可以不要)"),
                         choices=[True, False],
                         value=True,
                         interactive=True,
-                        visible=False
+                        visible=False,
                     )
                     version19 = gr.Radio(
                         label=i18n("版本"),
@@ -1223,14 +1302,25 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                         visible=False,
                     )
                     trainset_dir4 = gr.Textbox(
-                        label=i18n("输入训练文件夹路径"), value='./dataset/'+datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                        label=i18n("输入训练文件夹路径"),
+                        value="./dataset/"
+                        + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
                     )
-                    easy_uploader = gr.Files(label=i18n("也可批量输入音频文件, 二选一, 优先读文件夹"),file_types=['audio'])
+                    easy_uploader = gr.Files(
+                        label=i18n("也可批量输入音频文件, 二选一, 优先读文件夹"),
+                        file_types=["audio"],
+                    )
                     but1 = gr.Button(i18n("处理数据"), variant="primary")
                     info1 = gr.Textbox(label=i18n("输出信息"), value="")
-                    easy_uploader.upload(fn=upload_to_dataset, inputs=[easy_uploader, trainset_dir4], outputs=[info1, trainset_dir4])
+                    easy_uploader.upload(
+                        fn=upload_to_dataset,
+                        inputs=[easy_uploader, trainset_dir4],
+                        outputs=[info1, trainset_dir4],
+                    )
                     gpus6 = gr.Textbox(
-                        label=i18n("以-分隔输入使用的卡号, 例如   0-1-2   使用卡0和卡1和卡2"),
+                        label=i18n(
+                            "以-分隔输入使用的卡号, 例如   0-1-2   使用卡0和卡1和卡2"
+                        ),
                         value=gpus,
                         interactive=True,
                         visible=F0GPUVisible,
@@ -1245,14 +1335,14 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                         label=i18n("请指定说话人id"),
                         value=0,
                         interactive=True,
-                        visible=False
+                        visible=False,
                     )
                     but1.click(
                         preprocess_dataset,
                         [trainset_dir4, exp_dir1, sr2, np7],
                         [info1],
                         api_name="train_preprocess",
-                    ) 
+                    )
                 with gr.Column():
                     f0method8 = gr.Radio(
                         label=i18n(
@@ -1301,11 +1391,13 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                         interactive=True,
                     )
                     gpus16 = gr.Textbox(
-                            label=i18n("以-分隔输入使用的卡号, 例如   0-1-2   使用卡0和卡1和卡2"),
-                            value="0",
-                            interactive=True,
-                            visible=True
-                        )
+                        label=i18n(
+                            "以-分隔输入使用的卡号, 例如   0-1-2   使用卡0和卡1和卡2"
+                        ),
+                        value="0",
+                        interactive=True,
+                        visible=True,
+                    )
                     but3 = gr.Button(i18n("训练模型"), variant="primary")
                     but4 = gr.Button(i18n("训练特征索引"), variant="primary")
                     info3 = gr.Textbox(label=i18n("输出信息"), value="", max_lines=10)
@@ -1331,7 +1423,7 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             choices=[i18n("是"), i18n("否")],
                             value=i18n("是"),
                             interactive=True,
-                            visible=False
+                            visible=False,
                         )
                         if_cache_gpu17 = gr.Radio(
                             label=i18n(
@@ -1342,28 +1434,36 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             interactive=True,
                         )
                         if_save_every_weights18 = gr.Radio(
-                            label=i18n("是否在每次保存时间点将最终小模型保存至weights文件夹"),
+                            label=i18n(
+                                "是否在每次保存时间点将最终小模型保存至weights文件夹"
+                            ),
                             choices=[i18n("是"), i18n("否")],
                             value=i18n("是"),
                             interactive=True,
                         )
                     with gr.Row():
-                        download_model = gr.Button('5.Download Model')
+                        download_model = gr.Button("5.Download Model")
                     with gr.Row():
-                        model_files = gr.Files(label='Your Model and Index file can be downloaded here:')
-                        download_model.click(fn=download_model_files, inputs=[exp_dir1], outputs=[model_files, info3])
+                        model_files = gr.Files(
+                            label="Your Model and Index file can be downloaded here:"
+                        )
+                        download_model.click(
+                            fn=download_model_files,
+                            inputs=[exp_dir1],
+                            outputs=[model_files, info3],
+                        )
                     with gr.Row():
                         pretrained_G14 = gr.Textbox(
                             label=i18n("加载预训练底模G路径"),
                             value="assets/pretrained_v2/f0G40k.pth",
                             interactive=True,
-                            visible=False
+                            visible=False,
                         )
                         pretrained_D15 = gr.Textbox(
                             label=i18n("加载预训练底模D路径"),
                             value="assets/pretrained_v2/f0D40k.pth",
                             interactive=True,
-                            visible=False
+                            visible=False,
                         )
                         sr2.change(
                             change_sr2,
@@ -1381,7 +1481,9 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                             [f0method8, pretrained_G14, pretrained_D15],
                         )
                     with gr.Row():
-                        but5 = gr.Button(i18n("一键训练"), variant="primary", visible=False)
+                        but5 = gr.Button(
+                            i18n("一键训练"), variant="primary", visible=False
+                        )
                         but3.click(
                             click_train,
                             [
