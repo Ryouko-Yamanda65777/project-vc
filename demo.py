@@ -1,9 +1,189 @@
 from original import *
 import shutil, glob
+import os
+import re
+import random
+from scipy.io.wavfile import write
+from scipy.io.wavfile import read
+import numpy as np
+import gradio as gr
+import yt_dlp
+import subprocess
 from easyfuncs import download_from_url, CachedModels, whisperspeak, whisperspeak_on, stereo_process, sr_process
 os.makedirs("dataset",exist_ok=True)
 os.makedirs("audios",exist_ok=True)
 model_library = CachedModels()
+
+
+def download_audio(url):
+    ydl_opts = {
+        'format': 'bestaudio/best',
+        'outtmpl': 'ytdl/%(title)s.%(ext)s',
+        'postprocessors': [{
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'wav',
+            'preferredquality': '192',
+        }],
+    }
+
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info_dict = ydl.extract_info(url, download=True)
+        file_path = ydl.prepare_filename(info_dict).rsplit('.', 1)[0] + '.wav'
+        sample_rate, audio_data = read(file_path)
+        audio_array = np.asarray(audio_data, dtype=np.int16)
+
+        return sample_rate, audio_array
+
+
+
+
+uvr_models = {
+    'roformer_models': {
+        'BS-Roformer-Viperx-1297.ckpt': 'model_bs_roformer_ep_317_sdr_12.9755.ckpt',
+        'BS-Roformer-Viperx-1296.ckpt': 'model_bs_roformer_ep_368_sdr_12.9628.ckpt',
+        'BS-Roformer-Viperx-1053.ckpt': 'model_bs_roformer_ep_937_sdr_10.5309.ckpt',
+        'Mel-Roformer-Viperx-1143.ckpt': 'model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt',
+    },
+    'mdx23c_models': [
+        'MDX23C_D1581.ckpt',
+        'MDX23C-8KFFT-InstVoc_HQ.ckpt',
+        'MDX23C-8KFFT-InstVoc_HQ_2.ckpt',
+    ],
+    'mdxnet_models': [
+        'UVR-MDX-NET-Inst_full_292.onnx',
+        'UVR-MDX-NET_Inst_187_beta.onnx',
+        'UVR-MDX-NET_Inst_82_beta.onnx',
+        'UVR-MDX-NET_Inst_90_beta.onnx',
+        'UVR-MDX-NET_Main_340.onnx',
+        'UVR-MDX-NET_Main_390.onnx',
+        'UVR-MDX-NET_Main_406.onnx',
+        'UVR-MDX-NET_Main_427.onnx',
+        'UVR-MDX-NET_Main_438.onnx',
+        'UVR-MDX-NET-Inst_HQ_1.onnx',
+        'UVR-MDX-NET-Inst_HQ_2.onnx',
+        'UVR-MDX-NET-Inst_HQ_3.onnx',
+        'UVR-MDX-NET-Inst_HQ_4.onnx',
+        'UVR_MDXNET_Main.onnx',
+        'UVR-MDX-NET-Inst_Main.onnx',
+        'UVR_MDXNET_1_9703.onnx',
+        'UVR_MDXNET_2_9682.onnx',
+        'UVR_MDXNET_3_9662.onnx',
+        'UVR-MDX-NET-Inst_1.onnx',
+        'UVR-MDX-NET-Inst_2.onnx',
+        'UVR-MDX-NET-Inst_3.onnx',
+        'UVR_MDXNET_KARA.onnx',
+        'UVR_MDXNET_KARA_2.onnx',
+        'UVR_MDXNET_9482.onnx',
+        'UVR-MDX-NET-Voc_FT.onnx',
+        'Kim_Vocal_1.onnx',
+        'Kim_Vocal_2.onnx',
+        'Kim_Inst.onnx',
+        'Reverb_HQ_By_FoxJoy.onnx',
+        'UVR-MDX-NET_Crowd_HQ_1.onnx',
+        'kuielab_a_vocals.onnx',
+        'kuielab_a_other.onnx',
+        'kuielab_a_bass.onnx',
+        'kuielab_a_drums.onnx',
+        'kuielab_b_vocals.onnx',
+        'kuielab_b_other.onnx',
+        'kuielab_b_bass.onnx',
+        'kuielab_b_drums.onnx',
+    ],
+    'vrarch_models': [
+        '1_HP-UVR.pth',
+        '2_HP-UVR.pth',
+        '3_HP-Vocal-UVR.pth',
+        '4_HP-Vocal-UVR.pth',
+        '5_HP-Karaoke-UVR.pth',
+        '6_HP-Karaoke-UVR.pth',
+        '7_HP2-UVR.pth',
+        '8_HP2-UVR.pth',
+        '9_HP2-UVR.pth',
+        '10_SP-UVR-2B-32000-1.pth',
+        '11_SP-UVR-2B-32000-2.pth',
+        '12_SP-UVR-3B-44100.pth',
+        '13_SP-UVR-4B-44100-1.pth',
+        '14_SP-UVR-4B-44100-2.pth',
+        '15_SP-UVR-MID-44100-1.pth',
+        '16_SP-UVR-MID-44100-2.pth',
+        '17_HP-Wind_Inst-UVR.pth',
+        'UVR-De-Echo-Aggressive.pth',
+        'UVR-De-Echo-Normal.pth',
+        'UVR-DeEcho-DeReverb.pth',
+        'UVR-DeNoise-Lite.pth',
+        'UVR-DeNoise.pth',
+        'UVR-BVE-4B_SN-44100-1.pth',
+        'MGM_HIGHEND_v4.pth',
+        'MGM_LOWEND_A_v4.pth',
+        'MGM_LOWEND_B_v4.pth',
+        'MGM_MAIN_v4.pth',
+    ],
+    'demucs_models': [
+        'htdemucs_ft.yaml', 
+        'htdemucs.yaml',
+        'hdemucs_mmi.yaml',
+    ]
+}
+
+
+output_format = [
+    'wav',
+    'flac',
+    'mp3',
+]
+
+mdxnet_overlap_values = [
+    '0.25',
+    '0.5',
+    '0.75',
+    '0.99',
+]
+
+vrarch_window_size_values = [
+    '320',
+    '512',
+    '1024',
+]
+
+demucs_overlap_values = [
+    '0.25',
+    '0.50',
+    '0.75',
+    '0.99',
+]
+
+
+
+def roformer_batch(path_input, path_output, model, output_format, overlap, segment_size):
+  found_files = []
+  logs = []
+  logs.clear()
+
+  extensions = (".mp3", ".wav", ".flac")
+
+  uvr_models = uvr_models[model]
+
+  for audio_files in os.listdir(path_input):
+    if audio_files.endswith(extensions):
+      found_files.append(audio_files)
+  total_files = len(found_files)
+
+  if total_files == 0:
+    logs.append("No valid audio files.")
+    yield "\n".join(logs)
+  else:
+    logs.append(f"{total_files} audio files found")
+    found_files.sort()
+
+    for audio_files in found_files:
+      file_path = os.path.join(path_input, audio_files)
+      prompt = ["audio-separator", file_path, "-m", f"{uvr_models}", f"--output_dir={path_output}", f"--output_format={output_format}", "--normalization=0.9", f"--mdxc_overlap={overlap}", f"--mdxc_segment_size={segment_size}"]
+      logs.append(f"Processing file: {audio_files}")
+      yield "\n".join(logs)
+      subprocess.run(prompt)
+      logs.append(f"File: {audio_files} processed!")
+      yield "\n".join(logs)
+
 
 with gr.Blocks(title="RVC WEBUI",theme="Ryouko-Yamanda65777/ryo ") as app:
     with gr.Row():
@@ -35,13 +215,28 @@ with gr.Blocks(title="RVC WEBUI",theme="Ryouko-Yamanda65777/ryo ") as app:
                             dropbox = gr.File(label="Drop your audio here & hit the Reload button.")
                         with gr.TabItem("Record"):
                             record_button=gr.Microphone(label="OR Record audio.", type="filepath")
-                        with gr.TabItem("TTS (experimental)", visible=False if whisperspeak_on is None else True):
+                        with gr.TabItem("UVR5"):
                             with gr.Row():
-                                tts_text = gr.Textbox(label="Text to Speech", placeholder="Enter text to convert to speech")
+                                roformer_input_path = gr.Textbox(
+                                    label = "Input Path",
+                                    placeholder = "Place the input path here",
+                                    interactive = True   
+                                )
                             with gr.Row():
-                                tts_lang = gr.Radio(choices=["en","es","it","pt"],label="",value="en")
+                                roformer_output_path = gr.Textbox(
+                                    label = "Output Path",
+                                    placeholder = "Place the output path here",
+                                    interactive = True
+                                )
                             with gr.Row():
-                                tts_button = gr.Button(value="Speak", variant="primary")
+                                uvr_button = gr.Button("Separate!", variant = "primary")
+                            with gr.Row():
+                                roformer_info = gr.Textbox(
+                                    label = "Output Information",
+                                    interactive = False
+                                )
+                                
+                    uvr_button.click(roformer_batch, [roformer_input_path, roformer_output_path, roformer_model, roformer_output_format, roformer_overlap, roformer_segment_size], [roformer_info])             
                     with gr.Row():
                         paths_for_files = lambda path:[os.path.abspath(os.path.join(path, f)) for f in os.listdir(path) if os.path.splitext(f)[1].lower() in ('.mp3', '.wav', '.flac', '.ogg')]
                         input_audio0 = gr.Dropdown(
