@@ -5,12 +5,10 @@ os.makedirs("dataset",exist_ok=True)
 os.makedirs("audios",exist_ok=True)
 model_library = CachedModels()
 
-with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue="zinc")) as app:
+with gr.Blocks(title="RVC WEBUI",theme="Ryouko-Yamanda65777/ryo ") as app:
     with gr.Row():
         with gr.Column():
-            gr.HTML("<img  src='file/a.png' alt='image'>")
-        with gr.Column():
-            gr.HTML("<a href='https://ko-fi.com/rejekts' target='_blank'><img src='file/kofi_button.png' alt='🤝 Support Me'></a>")
+            gr.Markdown("# RVC V2")
     with gr.Tabs():
         with gr.TabItem("Inference"):
             with gr.Row():
@@ -22,8 +20,8 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                     step=1,
                     label="Speaker ID",
                     value=0,
-                    visible=False,
-                    interactive=True,
+                    visible=False
+                    #interactive=True,
                 )
                 vc_transform0 = gr.Number(
                     label="Pitch", 
@@ -238,8 +236,7 @@ with gr.Blocks(title="🔊",theme=gr.themes.Base(primary_hue="rose",neutral_hue=
                         label="Sampling Rate",
                         choices=["40k", "32k"],
                         value="32k",
-                        interactive=True,
-                        visible=False
+                        interactive=True                      
                     )
                     if_f0_3 = gr.Radio(
                         label="Will your model be used for singing? If not, you can ignore this.",
